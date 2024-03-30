@@ -1,0 +1,12 @@
+version: "3.3"
+
+services:
+  mongo:
+    image: "mongo:5.0"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "lalwietriuzaki"
+      MONGO_INITDB_ROOT_PASSWORD: "foOBl9R4UGOhoIYw"
+    ports:
+      - 27017:27017
+    volumes:
+      - "./mongo_data:/data/db"
