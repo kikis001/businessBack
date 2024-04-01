@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRoomDto, UpdateRoomDto } from '../dtos/room.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId, Types } from 'mongoose';
@@ -26,6 +26,14 @@ export class RoomsService {
     return rooms;
   }
 
+  async getOne(id: string) {
+    const room =  await this.roomModel.findById(id).populate('quiz').populate('teams').exec()
+    if(!room) {
+      throw new NotFoundException(`Room #${id} not found`);
+    }
+    return room
+  }
+
   async getAllWithUserCount(): Promise<any> {
     const rooms = await this.roomModel.find();
     const roomsWithUserCount = await Promise.all(
@@ -43,19 +51,30 @@ export class RoomsService {
   }
 
   async addTeamToRoom(roomId: string, teamId: string) {
-    const room = await this.roomModel.findById(roomId);
+    // const room = await this.roomModel.findById(roomId);
+    const room = await this.roomModel.findById(roomId).populate('teams').exec();
+
     if (!room) {
       throw new NotFoundException(`La sala #${roomId} no se ha encontrado`);
     }
-    if (room.teams.length >= 2) {
-      throw new NotFoundException('Máximo de equipos');
+
+    const existTeam = room.teams.findIndex((team) => {
+      return team._id.toString() === teamId
+    })
+
+    if(existTeam === -1) {
+      if(room.teams.length >= 2) {
+        throw new ConflictException('Máximo de equipos');
+      }else {
+        this.usersService.update(teamId, {score: 0})
+
+        room.teams.push(teamId);
+        await room.save();
+        return room;
+      }
+    }else {
+      return room;
     }
-
-    this.usersService.update(teamId, {score: 0})
-
-    room.teams.push(teamId);
-    await room.save();
-    return room;
   }
 
   create(payload: CreateRoomDto) {
@@ -63,7 +82,7 @@ export class RoomsService {
     return newRoom.save();
   }
 
-  async submitAnswer(roomId: string, teamId: string, answers: AnswerDto) {
+  async submitAnswer(roomId: string, teamId: string, answers: number[]) {
     const room = await this.roomModel.findById(roomId).populate('quiz').populate('teams').exec();
     if (!room) {
       throw new NotFoundException(`La sala #${roomId} no existe`);
@@ -77,9 +96,14 @@ export class RoomsService {
       throw new NotFoundException(`El usuario no pertenece a la sala`)
     }
 
+    const team = room.teams[teamIndex]
+    if(team.answersSubmitted) {
+      throw new BadRequestException(`El equipo ${team.nameTeam} ya ha enviado sus respuestas`)
+    }
+
     const quiz = room.quiz as Quiez;
     const correctAnswers = quiz.correctAnswers;
-    const teamsAnswers = answers.answers;
+    const teamsAnswers = answers;
     let scoreTeam = 0;
     for (let i = 0; i < correctAnswers.length; i++) {
       if (correctAnswers[i] === teamsAnswers[i]) {
@@ -94,7 +118,8 @@ export class RoomsService {
 
     const pro = {
       answers: teamsAnswers,
-      score: scoreTeam
+      score: scoreTeam,
+      answersSubmitted: true
     }
 
     this.usersService.update(teamId, pro)

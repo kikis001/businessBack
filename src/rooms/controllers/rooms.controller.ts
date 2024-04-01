@@ -1,19 +1,29 @@
-import { Controller, Get, Body, Post, Put, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Body, Post, Put, Param, NotFoundException, UseGuards } from '@nestjs/common';
 import { RoomsService } from '../services/rooms.service';
-import { CreateRoomDto, UpdateRoomDto } from '../dtos/room.dto';
-import { RoomsGateway } from '../gateways/rooms.gateway';
-import { AnyCatcher } from 'rxjs/internal/AnyCatcher';
+import { CreateRoomDto } from '../dtos/room.dto';
 import { AnswerDto } from '../dtos/answer.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Public } from 'src/auth/decorators/public.decorator';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('rooms')
 export class RoomsController {
   constructor(private roomsServices: RoomsService) {}
 
+  @Public()
   @Get()
   getAll() {
     return this.roomsServices.get();
   }
 
+  @Public()
+  @Get(':id')
+  getOne(@Param('id') id: string) {
+    return this.roomsServices.getOne(id)
+  }
+
+  @Public()
   @Post()
   create(@Body() payload: CreateRoomDto) {
     return this.roomsServices.create(payload);
@@ -25,7 +35,7 @@ export class RoomsController {
   }
 
   @Post(':roomId/teams/:teamId/submit-answers')
-  async submitAnswers(@Param('roomId') roomId: string, @Param('teamId') teamId: string, @Body() answers: AnswerDto){
+  async submitAnswers(@Param('roomId') roomId: string, @Param('teamId') teamId: string, @Body() answers: number[]){
     try {
        await this.roomsServices.submitAnswer(roomId, teamId, answers)
     } catch (error) {
@@ -36,8 +46,3 @@ export class RoomsController {
     }
   }
 }
-
-/*
-equipo: 6605143f66254ef006d7a85c
-sala: 6604f41eacb84695fc2b962a
-*/
