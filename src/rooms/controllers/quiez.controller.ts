@@ -1,10 +1,15 @@
-import { Body, Controller, Param, Post, Put } from '@nestjs/common';
+import { Get, Body, Controller, Param, Post, Put } from '@nestjs/common';
 import { CreateQuiezDto, UpdateQuiezDto } from '../dtos/quiez.dto';
 import { QuiezService } from '../services/quiez.service';
 
 @Controller('quiez')
 export class QuiezController {
   constructor(private quiezService: QuiezService) {}
+
+  @Get()
+  get() {
+    return this.quiezService.get()
+  }
 
   @Post()
   create(@Body() payload: CreateQuiezDto) {

@@ -19,8 +19,14 @@ export class RoomsController {
 
   @Public()
   @Get(':id')
-  getOne(@Param('id') id: string) {
+  getElement(@Param('id') id: string) {
     return this.roomsServices.getOne(id)
+  }
+
+  @Public()
+  @Get(':roomId/existUserRoom/:teamId')
+  getOne(@Param('roomId') roomId: string, @Param('teamId') teamId: string) {
+    return this.roomsServices.validateExistUser(roomId, teamId)
   }
 
   @Public()

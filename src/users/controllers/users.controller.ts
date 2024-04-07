@@ -13,6 +13,11 @@ export class UsersController {
     return this.usersService.getAll();
   }
 
+  @Get(':id')
+  getOne(@Param('id') id: string) {
+    return this.usersService.findUser(id)
+  }
+
   @Post()
   createUser(@Body() payload: CreateUserDto) {
     return this.usersService.create(payload);

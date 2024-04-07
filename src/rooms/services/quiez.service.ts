@@ -8,6 +8,10 @@ import { CreateQuiezDto, UpdateQuiezDto } from '../dtos/quiez.dto';
 export class QuiezService {
   constructor(@InjectModel(Quiez.name) private quizModel: Model<Quiez>) {}
 
+  get() {
+    return this.quizModel.find().exec()
+  }
+
   create(payload: CreateQuiezDto) {
     const newQuiz = new this.quizModel(payload);
     return newQuiz.save();

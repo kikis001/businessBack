@@ -1,14 +1,13 @@
 import { PartialType } from "@nestjs/swagger";
-import { IsAlpha, IsArray, IsMongoId, IsNotEmpty, IsString } from "class-validator";
+import { IsArray, IsMongoId, IsNotEmpty } from "class-validator";
 
 export class CreateWinnerDto {
+  @IsNotEmpty()
   @IsMongoId()
-  @IsNotEmpty()
-  readonly nameRoom: string
+  readonly idRoom: string
 
-  @IsNotEmpty()
   @IsArray()
-  readonly WinnerTeamName: string[]
+  readonly WinnerTeamName: string[] = []
 }
 
 export class UpdateWinnerDto extends PartialType(CreateWinnerDto){}
